@@ -151,7 +151,33 @@ GROUP BY
 -- 3 
 -- Desplegar el nombre del país, nombre del partido político y número de 
 -- alcaldías de los partidos políticos que ganaron más alcaldías por país. 
-
+SELECT nombrepais, nombrepartido, No_Alcaldias
+FROM (
+    SELECT nombrepais, nombrepartido, No_Alcaldias,
+           ROW_NUMBER() OVER (PARTITION BY nombrepais ORDER BY No_Alcaldias DESC) AS row_num
+    FROM (
+        SELECT nombrepais, nombrepartido, COUNT(*) AS No_Alcaldias
+        FROM (
+            SELECT nombrepais, nombremunicipio, nombrepartido, MAX(votos) AS t_votos
+            FROM (
+                SELECT p.nombrepais, m.nombremunicipio, pp.nombrepartido,
+                       SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS votos
+                FROM resultados r
+                INNER JOIN eleccion e ON r.ideleccion = e.ideleccion 
+                INNER JOIN municipio m ON e.idmunicipio = m.idmunicipio 
+                INNER JOIN departamento d ON m.iddepartamento = d.iddepartamento
+                INNER JOIN region r2 ON d.idregion = r2.idregion 
+                INNER JOIN pais p ON r2.idpais = p.idpais
+                INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
+                INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
+                GROUP BY p.nombrepais, m.nombremunicipio, pp.nombrepartido
+            ) AS res
+            GROUP BY nombremunicipio
+        ) AS res2
+        GROUP BY nombrepais, nombrepartido
+    ) AS res3
+) AS res4
+WHERE row_num = 1;
 
 
 
@@ -314,3 +340,21 @@ WHERE totalesdepto.nombre_eleccion = mayordepto.nombre_eleccion
 	AND totalesdepto.nombredepartamento = mayordepto.nombredepartamento
 	AND totalesdepto.yeareleccion = mayordepto.yeareleccion
 ;
+
+-- 6
+-- Desplegar el nombre del país, la región y el promedio de votos por
+-- departamento. 
+-- Por ejemplo: si la región tiene tres departamentos, se debe
+-- sumar todos los votos de la región y dividirlo dentro de tres (número de
+-- departamentos de la región).
+
+SELECT p.nombrepais,r2.nombreregion,ROUND(SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) / COUNT(d.iddepartamento),2) as Votos_Promedio
+FROM resultados r
+	INNER JOIN eleccion e ON r.ideleccion = e.ideleccion 
+	INNER JOIN municipio m ON e.idmunicipio = m.idmunicipio 
+	INNER JOIN departamento d ON m.iddepartamento = d.iddepartamento
+	INNER JOIN region r2 ON d.idregion = r2.idregion 
+	INNER JOIN pais p ON r2.idpais = p.idpais
+	INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
+	INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
+GROUP BY p.nombrepais ,r2.nombreregion
