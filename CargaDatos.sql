@@ -44,19 +44,9 @@ GROUP BY m.idmunicipio, tt.año_eleccion, ne.idnombreeleccion ;
 
 
 -- PARTIDOPOLITICO
-INSERT INTO resultados(ideleccion, idpartido, sexo, raza, analfabetos, primaria, nivelmedio, universitarios)  
-SELECT  e.ideleccion, tt.PARTIDO, tt.SEXO, tt.RAZA, tt.ANALFABETOS, tt.PRIMARIA, tt.NIVELMEDIO, tt.UNIVERSITARIOS  
-FROM eleccion e 
-INNER JOIN municipio m ON e.idmunicipio = m.idmunicipio 
-INNER JOIN departamento d ON m.iddepartamento  = d.iddepartamento
-INNER JOIN region r2 ON d.idregion = r2.idregion 
-INNER JOIN pais p ON r2.idpais = p.idpais
-INNER JOIN tabla_temporal tt ON m.nombremunicipio = tt.MUNICIPIO 
-	AND d.nombredepartamento = tt.DEPTO 
-	AND r2.nombreregion = tt.REGION
-	AND p.nombrepais = tt.PAIS 
-	AND e.yeareleccion = tt.AÑO_ELECCION 
-;
+INSERT INTO partidopolitico(idpartido, nombrepartido)
+SELECT DISTINCT PARTIDO , NOMBRE_PARTIDO 
+FROM tabla_temporal;
 
 -- RESULTADOS (PARA SABER LOS DE PRESIDENTE SE SUMAN TODOS LOS VOTOS DEL PAIS, ALCALDE MUNICIPAL ETC)
 INSERT INTO resultados(ideleccion, idpartido, sexo, raza, analfabetos, primaria, nivelmedio, universitarios)  
