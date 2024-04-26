@@ -358,3 +358,102 @@ FROM resultados r
 	INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
 	INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
 GROUP BY p.nombrepais ,r2.nombreregion
+
+
+
+/* consulta7
+	Desplegar el nombre del país y el porcentaje de votos por raza.
+*/
+SELECT p.nombrepais AS 'País',
+       SUM(CASE WHEN r.raza = 'LADINOS' THEN r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / COUNT(*) * 100 AS 'Porcentaje de votos de raza Ladina',
+       SUM(CASE WHEN r.raza = 'GARIFUNAS' THEN r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / COUNT(*) * 100 AS 'Porcentaje de votos de raza Garifuna',
+       SUM(CASE WHEN r.raza = 'INDIGENAS' THEN r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / COUNT(*) * 100 AS 'Porcentaje de votos de raza Indígena'
+FROM eleccion e
+JOIN municipio m ON e.idmunicipio = m.idmunicipio
+JOIN departamento d ON m.iddepartamento = d.iddepartamento
+JOIN region rg ON d.idregion = rg.idregion
+JOIN pais p ON rg.idpais = p.idpais
+JOIN resultados r ON e.ideleccion = r.ideleccion
+GROUP BY p.nombrepais;
+
+
+
+/*
+consulta 8
+Desplegar el nombre del país en el cual las elecciones han sido más
+peleadas. Para determinar esto se debe calcular la diferencia de porcentajes
+de votos entre el partido que obtuvo más votos y el partido que obtuvo menos
+votos
+*/
+
+SELECT p.nombrepais AS 'País',
+       MAX(diferencia_porcentaje) AS 'Diferencia de Porcentaje'
+FROM (
+    SELECT p.nombrepais,
+           (MAX(porcentaje) - MIN(porcentaje)) AS diferencia_porcentaje
+    FROM (
+        SELECT p.idpais, 
+               r.idpartido, 
+               SUM((r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) / (COUNT(*) * 1.0) * 100) AS porcentaje
+        FROM pais p
+        JOIN region rg ON p.idpais = rg.idpais
+        JOIN departamento d ON rg.idregion = d.idregion
+        JOIN municipio m ON d.iddepartamento = m.iddepartamento
+        JOIN eleccion e ON m.idmunicipio = e.idmunicipio
+        JOIN resultados r ON e.ideleccion = r.ideleccion
+        GROUP BY p.idpais, r.idpartido
+    ) AS porcentajes_por_pais
+    GROUP BY nombrepais
+) AS diferencia_por_pais
+JOIN pais p ON diferencia_por_pais.idpais = p.idpais
+GROUP BY p.nombrepais;
+
+
+/*
+9
+. Desplegar el nombre del país, el porcentaje de votos de ese país en el que
+han votado mayor porcentaje de analfabetas. (tip: solo desplegar un nombre
+de país, el de mayor porcentaje).
+
+*/
+SELECT p.nombrepais AS 'País',
+       porcentaje_analfabetas AS 'Porcentaje de Analfabetas'
+FROM (
+    SELECT p.nombrepais,
+           SUM(r.analfabetos) / NULLIF(SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios), 0) * 100 AS porcentaje_analfabetas
+    FROM pais p
+    JOIN region rg ON p.idpais = rg.idpais
+    JOIN departamento d ON rg.idregion = d.idregion
+    JOIN municipio m ON d.iddepartamento = m.iddepartamento
+    JOIN eleccion e ON m.idmunicipio = e.idmunicipio
+    JOIN resultados r ON e.ideleccion = r.ideleccion
+    GROUP BY p.nombrepais
+) AS porcentaje_por_pais
+ORDER BY porcentaje_analfabetas DESC
+LIMIT 1;
+
+
+
+/*
+10
+Desplegar la lista de departamentos de Guatemala y número de votos
+obtenidos, para los departamentos que obtuvieron más votos que el
+departamento de Guatemala
+*/
+
+SELECT d.nombredepartamento AS 'Departamento',
+       SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) AS 'Número de Votos'
+FROM departamento d
+JOIN municipio m ON d.iddepartamento = m.iddepartamento
+JOIN eleccion e ON m.idmunicipio = e.idmunicipio
+JOIN resultados r ON e.ideleccion = r.ideleccion
+WHERE d.iddepartamento <> (SELECT iddepartamento FROM departamento WHERE nombredepartamento = 'Guatemala')
+GROUP BY d.nombredepartamento
+HAVING SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) >
+       (SELECT SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) AS total_votos
+        FROM departamento d
+        JOIN municipio m ON d.iddepartamento = m.iddepartamento
+        JOIN eleccion e ON m.idmunicipio = e.idmunicipio
+        JOIN resultados r ON e.ideleccion = r.ideleccion
+        WHERE d.nombredepartamento = 'Guatemala')
+ORDER BY 'Número de Votos' DESC;
