@@ -6,26 +6,17 @@ USE PROYMAGIS;
 -- obtuvo de votos en su país. 
 
 SELECT 
-	subcon.snombre_eleccion,
-	subcon.syeareleccion,
-	subcon.snombrepais,
-    subcon.idpartido,
+	subcon.snombre_eleccion, subcon.syeareleccion, subcon.snombrepais, subcon.idpartido,
     (subcon.max_votos_sexoraza/maximovotos.maxvotospais * 100) as porcentaje
-FROM
-	(
+FROM(
 		SELECT 
-			subconsulta.nombre_eleccion as snombre_eleccion,
-			subconsulta.yeareleccion as syeareleccion,
-		    subconsulta.nombrepais as snombrepais,
+			subconsulta.nombre_eleccion as snombre_eleccion, subconsulta.yeareleccion as syeareleccion, subconsulta.nombrepais as snombrepais, 
 		    MAX(subconsulta.idpartido) AS idpartido,
 		    MAX(subconsulta.votos_sexoraza) AS max_votos_sexoraza
 		FROM 
 		    (
 		        SELECT 
-		        	n.nombre_eleccion,
-		            p.nombrepais,
-		            e.yeareleccion,
-		            pp.idpartido,
+		        	n.nombre_eleccion, p.nombrepais, e.yeareleccion, pp.idpartido,
 		            SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS votos_sexoraza
 		        FROM 
 		            resultados r
@@ -43,20 +34,14 @@ FROM
 		            partidopolitico pp ON r.idpartido = pp.idpartido
 		        INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
 		        GROUP BY 
-		        	n.nombre_eleccion,
-		            p.nombrepais, 
-		            e.yeareleccion,
-		            pp.idpartido
+		        	n.nombre_eleccion, p.nombrepais, e.yeareleccion, pp.idpartido
 		    ) AS subconsulta
 		GROUP BY 
-			subconsulta.nombre_eleccion,
-		    subconsulta.nombrepais, 
-		    subconsulta.yeareleccion
+			subconsulta.nombre_eleccion, subconsulta.nombrepais, subconsulta.yeareleccion
 	) AS subcon
 	,(
 		SELECT 
-			p.nombrepais,
-		    e.yeareleccion,
+			p.nombrepais, e.yeareleccion, 
 		    SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS maxvotospais
 		FROM 
 			resultados r
@@ -67,19 +52,11 @@ FROM
 		INNER JOIN pais p ON r2.idpais = p.idpais
 		INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
 		GROUP BY 
-		    p.nombrepais, 
-		    e.yeareleccion
+		    p.nombrepais, e.yeareleccion
     ) AS maximovotos
 WHERE maximovotos.nombrepais =  subcon.snombrepais
 GROUP BY 
-		subcon.snombre_eleccion,
-	    subcon.snombrepais, 
-	    subcon.syeareleccion,
-	    maximovotos.maxvotospais;
-
-
-
-
+		subcon.snombre_eleccion, subcon.snombrepais, subcon.syeareleccion, maximovotos.maxvotospais;
 
 -- 2
 -- Desplegar total de votos y porcentaje de votos de mujeres por departamento 
@@ -92,13 +69,9 @@ SELECT
 	votos_mujeres_departamento.nombrepais,
     votos_mujeres_departamento.nombredepartamento,
     (votos_mujeres_departamento.votosdeptomujeres / maximovotos_mujer.total_votos_mujer * 100) as porcentaje
-FROM
-	(
+FROM(
 		SELECT 
-			n.nombre_eleccion,
-			p.nombrepais,
-			d.nombredepartamento, 
-		    e.yeareleccion,
+			n.nombre_eleccion, p.nombrepais, d.nombredepartamento, e.yeareleccion,
 		    SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS votosdeptomujeres
 		FROM 
 			resultados r
@@ -111,15 +84,11 @@ FROM
 		INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
 		WHERE r.sexo = 'mujeres'
 		GROUP BY 
-			n.nombre_eleccion,
-		    p.nombrepais,
-		    d.nombredepartamento, 
-		    e.yeareleccion
+			n.nombre_eleccion, p.nombrepais, d.nombredepartamento, e.yeareleccion
 	) AS votos_mujeres_departamento
 	,(
 		SELECT 
-			p.nombrepais,
-		    e.yeareleccion,
+			p.nombrepais, e.yeareleccion,
 		    SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS total_votos_mujer
 		FROM 
 			resultados r
@@ -131,83 +100,67 @@ FROM
 		INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
 		WHERE r.sexo = 'mujeres'
 		GROUP BY 
-		    p.nombrepais, 
-		    e.yeareleccion
+		    p.nombrepais, e.yeareleccion
     ) AS maximovotos_mujer
 WHERE votos_mujeres_departamento.nombrepais =  maximovotos_mujer.nombrepais
 GROUP BY 
-		votos_mujeres_departamento.nombre_eleccion,
+		votos_mujeres_departamento.nombre_eleccion, 
 		votos_mujeres_departamento.yeareleccion,
 		votos_mujeres_departamento.nombrepais,
     	votos_mujeres_departamento.nombredepartamento,
     	porcentaje
 ;	 
 
-
-
-
-
-
 -- 3 
 -- Desplegar el nombre del país, nombre del partido político y número de 
 -- alcaldías de los partidos políticos que ganaron más alcaldías por país. 
-SELECT nombrepais, nombrepartido, No_Alcaldias
+SELECT 
+    nombrepais,idpartido,sumapartidos AS AlcaldiasGanadas
 FROM (
-    SELECT nombrepais, nombrepartido, No_Alcaldias,
-           ROW_NUMBER() OVER (PARTITION BY nombrepais ORDER BY No_Alcaldias DESC) AS row_num
+    SELECT 
+        nombrepais,idpartido,sumapartidos,
+        ROW_NUMBER() OVER (PARTITION BY nombrepais ORDER BY sumapartidos DESC) AS rn
     FROM (
-        SELECT nombrepais, nombrepartido, COUNT(*) AS No_Alcaldias
+        SELECT 
+            nombrepais,idpartido,COUNT(idpartido) as sumapartidos
         FROM (
-            SELECT nombrepais, nombremunicipio, nombrepartido, MAX(votos) AS t_votos
+            SELECT 
+                nombrepais,idpartido
             FROM (
-                SELECT p.nombrepais, m.nombremunicipio, pp.nombrepartido,
-                       SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS votos
+                SELECT 
+                    n.nombre_eleccion,p.nombrepais,r2.nombreregion,d.nombredepartamento,pp.idpartido, 
+                    SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS sumavotos,
+                    ROW_NUMBER() OVER (PARTITION BY d.nombredepartamento ORDER BY SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) DESC) AS rn
                 FROM resultados r
-                INNER JOIN eleccion e ON r.ideleccion = e.ideleccion 
-                INNER JOIN municipio m ON e.idmunicipio = m.idmunicipio 
-                INNER JOIN departamento d ON m.iddepartamento = d.iddepartamento
-                INNER JOIN region r2 ON d.idregion = r2.idregion 
-                INNER JOIN pais p ON r2.idpais = p.idpais
-                INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
-                INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
-                GROUP BY p.nombrepais, m.nombremunicipio, pp.nombrepartido
-            ) AS res
-            GROUP BY nombremunicipio
-        ) AS res2
-        GROUP BY nombrepais, nombrepartido
-    ) AS res3
-) AS res4
-WHERE row_num = 1;
-
-
-
+                    INNER JOIN eleccion e ON r.ideleccion = e.ideleccion 
+                    INNER JOIN municipio m ON e.idmunicipio = m.idmunicipio 
+                    INNER JOIN departamento d ON m.iddepartamento = d.iddepartamento
+                    INNER JOIN region r2 ON d.idregion = r2.idregion 
+                    INNER JOIN pais p ON r2.idpais = p.idpais
+                    INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
+                    INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
+                GROUP BY 
+                    n.nombre_eleccion, p.nombrepais, r2.nombreregion, d.nombredepartamento, pp.idpartido 
+            ) AS ranked_data
+            WHERE rn = 1
+        ) AS totales
+        GROUP BY  nombrepais, idpartido
+    ) AS MAXIMO
+) AS final_result
+WHERE rn = 1;
 
 -- 4
 -- Desplegar todas las regiones por país en las que predomina la raza indígena. 
 -- Es decir, hay más votos que las otras razas. 
 SELECT 
-    nombre_eleccion,
-    yeareleccion,
-    nombrepais,
-    nombreregion,
-    raza,
-    votos
+    nombre_eleccion, yeareleccion, nombrepais, nombreregion, raza, votos
 FROM (
     SELECT 
-        nombre_eleccion,
-        yeareleccion,
-        nombrepais,
-        nombreregion,
-        raza,
-        votos,
+        nombre_eleccion, yeareleccion, nombrepais, nombreregion, raza, votos,
         ROW_NUMBER() OVER (PARTITION BY nombre_eleccion, yeareleccion, nombrepais, nombreregion ORDER BY votos DESC) AS rn
     FROM (
         SELECT 
-            n.nombre_eleccion,
-            p.nombrepais,
-            r2.nombreregion, 
-            e.yeareleccion,
-            r.raza, 
+            n.nombre_eleccion, p.nombrepais, r2.nombreregion, e.yeareleccion, r.raza, 
             SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS votos
         FROM 
             resultados r
@@ -219,38 +172,22 @@ FROM (
         INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
         INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
         GROUP BY 
-            n.nombre_eleccion,
-            p.nombrepais,
-            r2.nombreregion, 
-            e.yeareleccion,
-            r.raza
+            n.nombre_eleccion, p.nombrepais, r2.nombreregion, e.yeareleccion, r.raza
     ) AS votos_raza
 ) AS ranked
 WHERE rn = 1 AND raza = 'INDIGENAS';
-
-
-
-
 
 -- 5 
 -- Desplegar el porcentaje de mujeres universitarias y hombres universitarios 
 -- que votaron por departamento, donde las mujeres universitarias que votaron 
 -- fueron más que los hombres universitarios que votaron. 
 SELECT 
-	mayordepto.nombre_eleccion,
-	mayordepto.nombrepais,
-	mayordepto.nombredepartamento,
-	mayordepto.mayor_votos,
-	mayordepto.votos,
-	totalesdepto.votos,
+	mayordepto.nombre_eleccion, mayordepto.nombrepais, mayordepto.nombredepartamento, mayordepto.mayor_votos, mayordepto.votos, totalesdepto.votos, 
 	(mayordepto.votos / totalesdepto.votos *100)as porcentaje
 FROM 
 	(
 		SELECT 
-			votosmujeresuni.nombre_eleccion,
-			votosmujeresuni.nombrepais,
-			votosmujeresuni.nombredepartamento,
-			votosmujeresuni.yeareleccion,
+			votosmujeresuni.nombre_eleccion, votosmujeresuni.nombrepais, votosmujeresuni.nombredepartamento, votosmujeresuni.yeareleccion,
 			CASE 
 		        WHEN votosmujeresuni.votos > votoshombresuni.votos THEN 'Mujeres'
 		        ELSE 'Hombres'
@@ -262,11 +199,7 @@ FROM
 		FROM 
 			(
 				SELECT 
-		            n.nombre_eleccion,
-		            p.nombrepais,
-		            d.nombredepartamento , 
-		            e.yeareleccion,
-		            r.sexo, 
+		            n.nombre_eleccion, p.nombrepais, d.nombredepartamento, e.yeareleccion, r.sexo, 
 		            SUM(r.universitarios) AS votos
 		        FROM 
 		            resultados r
@@ -278,19 +211,11 @@ FROM
 		        INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
 		        WHERE r.sexo = 'mujeres' 
 		        GROUP BY 
-		            n.nombre_eleccion,
-		            p.nombrepais,
-		            d.nombredepartamento , 
-		            e.yeareleccion,
-		            r.sexo
+		            n.nombre_eleccion, p.nombrepais, d.nombredepartamento, e.yeareleccion, r.sexo
 			) AS votosmujeresuni,
 			(
 				SELECT 
-		            n.nombre_eleccion,
-		            p.nombrepais,
-		            d.nombredepartamento , 
-		            e.yeareleccion,
-		            r.sexo, 
+		            n.nombre_eleccion, p.nombrepais, d.nombredepartamento, e.yeareleccion, r.sexo, 
 		            SUM( r.universitarios) AS votos
 		        FROM 
 		            resultados r
@@ -302,11 +227,7 @@ FROM
 		        INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
 		        WHERE r.sexo = 'hombres' 
 		        GROUP BY 
-		            n.nombre_eleccion,
-		            p.nombrepais,
-		            d.nombredepartamento , 
-		            e.yeareleccion,
-		            r.sexo
+		            n.nombre_eleccion, p.nombrepais, d.nombredepartamento, e.yeareleccion, r.sexo
 			) AS votoshombresuni
 		WHERE votosmujeresuni.nombre_eleccion = votoshombresuni.nombre_eleccion  
 			AND votosmujeresuni.nombrepais = votoshombresuni.nombrepais
@@ -315,10 +236,7 @@ FROM
 	) as mayordepto,
 	(
 		SELECT 
-            n.nombre_eleccion,
-            p.nombrepais,
-            d.nombredepartamento , 
-            e.yeareleccion, 
+            n.nombre_eleccion, p.nombrepais, d.nombredepartamento , e.yeareleccion, 
             SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS votos
         FROM 
             resultados r
@@ -330,10 +248,7 @@ FROM
         INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
         INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
         GROUP BY 
-            n.nombre_eleccion,
-            p.nombrepais,
-            d.nombredepartamento, 
-            e.yeareleccion
+            n.nombre_eleccion, p.nombrepais, d.nombredepartamento, e.yeareleccion
 	) as totalesdepto
 WHERE totalesdepto.nombre_eleccion = mayordepto.nombre_eleccion
 	AND totalesdepto.nombrepais = mayordepto.nombrepais
@@ -348,18 +263,31 @@ WHERE totalesdepto.nombre_eleccion = mayordepto.nombre_eleccion
 -- sumar todos los votos de la región y dividirlo dentro de tres (número de
 -- departamentos de la región).
 
-SELECT p.nombrepais,r2.nombreregion,ROUND(SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) / COUNT(d.iddepartamento),2) as Votos_Promedio
-FROM resultados r
-	INNER JOIN eleccion e ON r.ideleccion = e.ideleccion 
-	INNER JOIN municipio m ON e.idmunicipio = m.idmunicipio 
-	INNER JOIN departamento d ON m.iddepartamento = d.iddepartamento
-	INNER JOIN region r2 ON d.idregion = r2.idregion 
-	INNER JOIN pais p ON r2.idpais = p.idpais
-	INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
-	INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
-GROUP BY p.nombrepais ,r2.nombreregion;
-
-
+SELECT sumavotosdepto.nombrepais, sumavotosdepto.nombreregion, ROUND((sumavotosdepto.suma / conteo.totaldepto),2) as promedio
+FROM 
+	(
+		SELECT 
+			p.nombrepais, r.nombreregion, COUNT(d.iddepartamento) as totaldepto
+		FROM departamento d 
+			INNER JOIN region r ON d.idregion = r.idregion 
+			INNER JOIN pais p ON r.idpais = p.idpais
+		WHERE d.idregion = r.idregion 
+		GROUP BY p.nombrepais ,r.nombreregion
+	) as conteo,
+	(
+		SELECT p.nombrepais,r2.nombreregion,SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios)as suma 
+		FROM resultados r
+			INNER JOIN eleccion e ON r.ideleccion = e.ideleccion 
+			INNER JOIN municipio m ON e.idmunicipio = m.idmunicipio 
+			INNER JOIN departamento d ON m.iddepartamento = d.iddepartamento
+			INNER JOIN region r2 ON d.idregion = r2.idregion 
+			INNER JOIN pais p ON r2.idpais = p.idpais
+			INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
+			INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
+		GROUP BY p.nombrepais ,r2.nombreregion
+	) as sumavotosdepto
+WHERE sumavotosdepto.nombrepais = conteo.nombrepais AND sumavotosdepto.nombreregion = conteo.nombreregion
+;
 
 /* consulta7
 	Desplegar el nombre del país y el porcentaje de votos por raza.
