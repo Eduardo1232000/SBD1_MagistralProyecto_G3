@@ -404,7 +404,9 @@ FROM departamento d
 JOIN municipio m ON d.iddepartamento = m.iddepartamento
 JOIN eleccion e ON m.idmunicipio = e.idmunicipio
 JOIN resultados r ON e.ideleccion = r.ideleccion
-WHERE d.iddepartamento != 60
+JOIN region rg ON d.idregion = rg.idregion
+JOIN pais p ON p.idpais =  rg.idpais
+WHERE p.idpais = 6 AND d.iddepartamento != 60
 GROUP BY d.nombredepartamento
 HAVING SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) > (
 	SELECT SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios)
