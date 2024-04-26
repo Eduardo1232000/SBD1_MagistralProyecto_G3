@@ -371,19 +371,19 @@ obtenidos, para los departamentos que obtuvieron más votos que el
 departamento de Guatemala
 */
 
-SELECT d.nombredepartamento AS 'Departamento',
-       SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) AS 'Número de Votos'
+SELECT d.nombredepartamento AS 'Departamento', SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) AS 'Número de Votos'
 FROM departamento d
 JOIN municipio m ON d.iddepartamento = m.iddepartamento
 JOIN eleccion e ON m.idmunicipio = e.idmunicipio
 JOIN resultados r ON e.ideleccion = r.ideleccion
-WHERE d.iddepartamento <> (SELECT iddepartamento FROM departamento WHERE nombredepartamento = 'Guatemala')
+WHERE d.iddepartamento != 60
 GROUP BY d.nombredepartamento
-HAVING SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) >
-       (SELECT SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) AS total_votos
-        FROM departamento d
-        JOIN municipio m ON d.iddepartamento = m.iddepartamento
-        JOIN eleccion e ON m.idmunicipio = e.idmunicipio
-        JOIN resultados r ON e.ideleccion = r.ideleccion
-        WHERE d.nombredepartamento = 'Guatemala')
-ORDER BY 'Número de Votos' DESC;
+HAVING SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) > (
+	SELECT SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios)
+	FROM departamento d
+	JOIN municipio m ON d.iddepartamento = m.iddepartamento
+	JOIN eleccion e ON m.idmunicipio = e.idmunicipio
+	JOIN resultados r ON e.ideleccion = r.ideleccion
+	WHERE d.iddepartamento = 60
+)
+ORDER BY SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) DESC;
