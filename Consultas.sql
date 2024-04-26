@@ -294,16 +294,16 @@ WHERE sumavotosdepto.nombrepais = conteo.nombrepais AND sumavotosdepto.nombrereg
 */
 
 
-SELECT p.nombrepais AS 'País',
-       SUM(CASE WHEN r.raza = 'LADINOS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100 AS 'Porcentaje de votos de raza Ladina',
-       SUM(CASE WHEN r.raza = 'GARIFUNAS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100 AS 'Porcentaje de votos de raza Garifuna',
-       SUM(CASE WHEN r.raza = 'INDIGENAS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) /SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100 AS 'Porcentaje de votos de raza Indígena'
+SELECT p.nombrepais AS País,
+	ROUND((SUM(CASE WHEN r.raza = 'LADINOS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100),2) AS 'Porcentaje de votos de raza Ladina',
+	ROUND((SUM(CASE WHEN r.raza = 'GARIFUNAS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100),2) AS 'Porcentaje de votos de raza Garifuna',
+	ROUND((SUM(CASE WHEN r.raza = 'INDIGENAS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) /SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100),2) AS 'Porcentaje de votos de raza Indígena'
 FROM eleccion e
-JOIN municipio m ON e.idmunicipio = m.idmunicipio
-JOIN departamento d ON m.iddepartamento = d.iddepartamento
-JOIN region rg ON d.idregion = rg.idregion
-JOIN pais p ON rg.idpais = p.idpais
-JOIN resultados r ON e.ideleccion = r.ideleccion
+	JOIN municipio m ON e.idmunicipio = m.idmunicipio
+	JOIN departamento d ON m.iddepartamento = d.iddepartamento
+	JOIN region rg ON d.idregion = rg.idregion
+	JOIN pais p ON rg.idpais = p.idpais
+	JOIN resultados r ON e.ideleccion = r.ideleccion
 GROUP BY p.nombrepais;
 
 
@@ -316,27 +316,55 @@ de votos entre el partido que obtuvo más votos y el partido que obtuvo menos
 votos
 */
 
-SELECT p.nombrepais AS 'País',
-       MAX(diferencia_porcentaje) AS 'Diferencia de Porcentaje'
-FROM (
-    SELECT p.nombrepais,
-           (MAX(porcentaje) - MIN(porcentaje)) AS diferencia_porcentaje
+
+SELECT 
+    nombrepais,
+    MAX(pelea_pais.pelea) as 'Elecciones_mas_peleadas'
+FROM(
+    SELECT 
+        nombrepais, 
+        (MAX(porcentaje) - MIN(porcentaje)) as pelea
     FROM (
-        SELECT p.idpais, 
-               r.idpartido, 
-               SUM((r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) / (COUNT(*) * 1.0) * 100) AS porcentaje
-        FROM pais p
-        JOIN region rg ON p.idpais = rg.idpais
-        JOIN departamento d ON rg.idregion = d.idregion
-        JOIN municipio m ON d.iddepartamento = m.iddepartamento
-        JOIN eleccion e ON m.idmunicipio = e.idmunicipio
-        JOIN resultados r ON e.ideleccion = r.ideleccion
-        GROUP BY p.idpais, r.idpartido
-    ) AS porcentajes_por_pais
-    GROUP BY nombrepais
-) AS diferencia_por_pais
-JOIN pais p ON diferencia_por_pais.idpais = p.idpais
-GROUP BY p.nombrepais;
+        SELECT 
+            votospartido.nombrepais, votospartido.idpartido, (votospartido.sumavotos / totalvotospais.conteovotos) * 100 as porcentaje
+        FROM (
+            SELECT 
+                p.nombrepais, r.idpartido, SUM((r.analfabetos + r.primaria + r.nivelmedio + r.universitarios)) AS sumavotos
+            FROM 
+                pais p
+                JOIN region rg ON p.idpais = rg.idpais
+                JOIN departamento d ON rg.idregion = d.idregion
+                JOIN municipio m ON d.iddepartamento = m.iddepartamento
+                JOIN eleccion e ON m.idmunicipio = e.idmunicipio
+                JOIN resultados r ON e.ideleccion = r.ideleccion
+            GROUP BY 
+                p.idpais, r.idpartido
+        ) AS votospartido,
+        (
+            SELECT 
+                p.nombrepais,
+                SUM((r.analfabetos + r.primaria + r.nivelmedio + r.universitarios)) AS conteovotos
+            FROM 
+                pais p
+                JOIN region rg ON p.idpais = rg.idpais
+                JOIN departamento d ON rg.idregion = d.idregion
+                JOIN municipio m ON d.iddepartamento = m.iddepartamento
+                JOIN eleccion e ON m.idmunicipio = e.idmunicipio
+                JOIN resultados r ON e.ideleccion = r.ideleccion
+            GROUP BY 
+                p.idpais
+        ) AS totalvotospais
+        WHERE 
+            totalvotospais.nombrepais = votospartido.nombrepais
+    )as diferencia
+    GROUP BY 
+        nombrepais
+)as pelea_pais
+GROUP BY 
+    nombrepais
+ORDER BY 
+    Elecciones_mas_peleadas DESC
+LIMIT 1;
 
 
 /*
