@@ -357,17 +357,19 @@ FROM resultados r
 	INNER JOIN pais p ON r2.idpais = p.idpais
 	INNER JOIN partidopolitico pp ON r.idpartido = pp.idpartido
 	INNER JOIN nombreeleccion n ON e.idnombreeleccion = n.idnombreeleccion
-GROUP BY p.nombrepais ,r2.nombreregion
+GROUP BY p.nombrepais ,r2.nombreregion;
 
 
 
 /* consulta7
 	Desplegar el nombre del país y el porcentaje de votos por raza.
 */
+
+
 SELECT p.nombrepais AS 'País',
-       SUM(CASE WHEN r.raza = 'LADINOS' THEN r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / COUNT(*) * 100 AS 'Porcentaje de votos de raza Ladina',
-       SUM(CASE WHEN r.raza = 'GARIFUNAS' THEN r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / COUNT(*) * 100 AS 'Porcentaje de votos de raza Garifuna',
-       SUM(CASE WHEN r.raza = 'INDIGENAS' THEN r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / COUNT(*) * 100 AS 'Porcentaje de votos de raza Indígena'
+       SUM(CASE WHEN r.raza = 'LADINOS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100 AS 'Porcentaje de votos de raza Ladina',
+       SUM(CASE WHEN r.raza = 'GARIFUNAS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) / SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100 AS 'Porcentaje de votos de raza Garifuna',
+       SUM(CASE WHEN r.raza = 'INDIGENAS' THEN r.analfabetos + r.primaria + r.nivelmedio + r.universitarios ELSE 0 END) /SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) * 100 AS 'Porcentaje de votos de raza Indígena'
 FROM eleccion e
 JOIN municipio m ON e.idmunicipio = m.idmunicipio
 JOIN departamento d ON m.iddepartamento = d.iddepartamento
@@ -394,7 +396,7 @@ FROM (
     FROM (
         SELECT p.idpais, 
                r.idpartido, 
-               SUM((r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios) / (COUNT(*) * 1.0) * 100) AS porcentaje
+               SUM((r.analfabetos + r.primaria + r.nivelmedio + r.universitarios) / (COUNT(*) * 1.0) * 100) AS porcentaje
         FROM pais p
         JOIN region rg ON p.idpais = rg.idpais
         JOIN departamento d ON rg.idregion = d.idregion
@@ -416,11 +418,11 @@ han votado mayor porcentaje de analfabetas. (tip: solo desplegar un nombre
 de país, el de mayor porcentaje).
 
 */
-SELECT p.nombrepais AS 'País',
+SELECT nombrepais AS 'País',
        porcentaje_analfabetas AS 'Porcentaje de Analfabetas'
 FROM (
     SELECT p.nombrepais,
-           SUM(r.analfabetos) / NULLIF(SUM(r.analfabetos + r.alfabetos + r.primaria + r.nivelmedio + r.universitarios), 0) * 100 AS porcentaje_analfabetas
+           SUM(r.analfabetos) / NULLIF(SUM(r.analfabetos + r.primaria + r.nivelmedio + r.universitarios), 0) * 100 AS porcentaje_analfabetas
     FROM pais p
     JOIN region rg ON p.idpais = rg.idpais
     JOIN departamento d ON rg.idregion = d.idregion
