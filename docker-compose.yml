@@ -1,0 +1,15 @@
+version: '3.1'
+services: 
+  mysql-dev:
+    image: mysql:8.0.35
+    restart: always
+    environment:
+      MYSQL_DATABASE: PROYMAGIS
+      MYSQL_USER: USER
+      MYSQL_PASSWORD: PASS
+      MYSQL_ROOT_PASSWORD: pro123
+    volumes:
+      - ./database:/var/lib/mysql
+      - ./bulk:/var/lib/mysql-files
+    ports:
+      - "3306:3306"
