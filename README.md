@@ -117,7 +117,7 @@ Se identificaron las relaciones entre las entidades, como la relación entre pa�
 Se creó un modelo lógico de la base de datos que representaba las entidades y relaciones.
 </p>
 
-![Topologia de la red del backbone](imagenes/logico.png)
+![FotosProyecto](imagenes/logico.png)
 <br><br>
 
 <p style="text-align: justify;">
@@ -150,7 +150,7 @@ Como se trabajo en el software: "data modeler" se utilizo la opcion llamda: Real
 </p>
 
 
-![Topologia de la red del backbone](imagenes/fisico.png)
+![FotosProyecto](imagenes/fisico.png)
 
 <p style="text-align: justify;">
 Cada tabla representa una entidad y contiene columnas que representan los atributos de esa entidad.
@@ -273,3 +273,110 @@ En el enunciado se menciona que se requiere un sistema de bases de datos donde s
 </p>
 
 ______
+
+
+### Capturas de la Carga masiva<br><br>
+
+<p style="text-align: justify;">
+Se debe de ejecutar script que se encuenta en el archivo: ScriptCreacion.sql.
+</p>
+
+![FotosProyecto](imagenes/1.png)
+
+<p style="text-align: justify;">
+Luego seguir los siguientes pasos:
+</p>
+
+- Click derecho a la tabla llamada: tabla_temporal
+
+![FotosProyecto](imagenes/2.png)
+
+- Click a la opción: Import Data
+
+![FotosProyecto](imagenes/3.png)
+
+- Click en el boton siguiente
+
+![FotosProyecto](imagenes/4.png)
+
+- Seleccionar el archivo de carga llamado: DATOSSINCOLUMNASREPETIDAS.csv
+  
+![FotosProyecto](imagenes/5.png)
+
+- Cambiar el valor "," que aparece por: ;
+
+![FotosProyecto](imagenes/6.png)
+
+- Darle de nuevo al boton siguiente y por ultimo a continuar, con esto ya estaran cargados los datos necesarios para el proyecto
+  
+![FotosProyecto](imagenes/7.png)
+
+- Para ver los datos que se ingresaron en la tabla temporal debe de colcar el siguiente script
+
+```
+USE PRYMAGIS;
+SELECT * FROM tabla_temporal;
+```
+![FotosProyecto](imagenes/8.png)
+
+### Cargar los datos a las tablas<br><br>
+
+<p style="text-align: justify;">
+La tabla temporal nos ayudará a cargar las tablas con sus respectivos datos y para eso necesitamos ejecutar el script que esta en el archivo llamado: CargaDatos.sql
+</p>
+
+![FotosProyecto](imagenes/9.png)
+
+___
+
+### Capturas de los resultados<br><br>
+
+<p style="text-align: justify;">
+Se agregaron capturas de las respuestas a las consultas del proyecto
+</p>
+
+#### Resultado Consulta #1
+
+![FotosProyecto](imagenes/10.png)
+
+#### Resultado Consulta #2
+
+![FotosProyecto](imagenes/11.png)
+
+#### Resultado Consulta #3
+
+![FotosProyecto](imagenes/12.png)
+
+#### Resultado Consulta #4
+
+![FotosProyecto](imagenes/13.png)
+
+#### Resultado Consulta #5
+
+![FotosProyecto](imagenes/14.png)
+
+#### Resultado Consulta #6
+
+![FotosProyecto](imagenes/15.png)
+
+#### Resultado Consulta #7
+
+![FotosProyecto](imagenes/16.png)
+
+#### Resultado Consulta #8
+
+![FotosProyecto](imagenes/17.png)
+
+#### Resultado Consulta #9
+
+![FotosProyecto](imagenes/18.png)
+
+#### Resultado Consulta #10
+
+![FotosProyecto](imagenes/19.png)
+
+
+___
+
+### Repositorio: <br><br>
+[Link del Repositorio de GitHub](https://github.com/Eduardo1232000/SBD1_MagistralProyecto_G3)
